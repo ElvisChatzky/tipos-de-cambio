@@ -1,0 +1,67 @@
+# Baja del BNA las cotizaciones del dólar (billete y divisa) y del Ministerio del Interior los feriados, arma la página y la publica.
+# Corre de lunes a viernes, cada hora de 10 a 19 (hora argentina): el BNA publica el billete hacia las 10 y la divisa al cierre.
+# También corre cuando se sube un cambio y a mano (Actions → «Actualizar tipos de cambio» → Run workflow).
+# Lo que se pide afuera: www.bna.com.ar (moneda, clase y fechas) y www.argentina.gob.ar (el calendario de cada año). Nada más.
+name: Actualizar tipos de cambio
+
+on:
+  schedule:
+    - cron: "7 13-22 * * 1-5"   # en UTC: 13:07 a 22:07 = 10:07 a 19:07 en Argentina (UTC-3, sin horario de verano)
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # para guardar en el repositorio las cotizaciones y los feriados nuevos
+  pages: write      # para publicar la página
+  id-token: write
+
+concurrency:
+  group: tipos-de-cambio
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    env:
+      TZ: America/Argentina/Buenos_Aires
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bajar cotizaciones y feriados, y armar la página
+        run: python herramientas/tipos-de-cambio/actualizar.py
+
+      - name: Guardar las cotizaciones y los feriados nuevos
+        # solo si cambió algún día (no por la hora de actualización): así el historial queda limpio y GitHub no apaga el trabajo programado
+        run: |
+          archivos="herramientas/tipos-de-cambio/cotizaciones.json herramientas/tipos-de-cambio/feriados.json"
+          if git diff -U0 -- $archivos | grep -qE '^[+-][[:space:]]+\[?"20[0-9]{2}-'; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add $archivos
+            git commit -m "Cotizaciones y feriados al $(date '+%d/%m/%Y %H:%M')"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "No hay cotizaciones ni feriados nuevos para guardar."
+          fi
+
+      - name: Preparar la página
+        run: |
+          mkdir -p _sitio
+          cp "herramientas/Tipos de cambio.html" _sitio/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _sitio
+
+      - id: publicar
+        uses: actions/deploy-pages@v4

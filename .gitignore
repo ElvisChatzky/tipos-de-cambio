@@ -1,0 +1,7 @@
+# la página se arma en GitHub cada vez (no se guarda en el repositorio)
+herramientas/Tipos de cambio.html
+_sitio/
+herramientas/tipos-de-cambio/registro.txt
+*.nuevo
+__pycache__/
+*.pyc

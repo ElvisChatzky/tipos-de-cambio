@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<!-- Sin conexión: la página no puede pedir nada a ninguna dirección. Las cotizaciones vienen adentro del archivo. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tipos de cambio del dólar · Banco Nación</title>
+<meta name="author" content="Elvis Chatzky">
+<style>
+/*FUENTES*/
+:root {
+  --papel: #edf1ef; --hoja: #ffffff; --tinta: #12222a; --tinta-2: #4c5e66; --raya: #d3dcd8; --raya-2: #e4eae7;
+  --billete: #0e5a48; --billete-2: #0a4638; --billete-claro: #dff0ea;
+  --divisa: #143f6e; --divisa-2: #0f3158; --divisa-claro: #e0eaf6;
+  --num: #f5faf8; --num-2: rgba(245, 250, 248, .74);
+  --aviso: #6f4a00; --aviso-bg: #fff2cf; --aviso-raya: #ecd28a; --foco: #c98a00; --ok: #0e5a48; --mal: #a3261c;
+  --feriado: #a1291f; --feriado-bg: #fbe8e4;
+  --letra: "Barlow", "Segoe UI", Arial, sans-serif; --cifra: "Barlow Semi Condensed", "Barlow", "Arial Narrow", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papel: #0b1316; --hoja: #131d21; --tinta: #e9f0ed; --tinta-2: #9fb1ac; --raya: #25353a; --raya-2: #1b282c;
+    --billete: #0f6451; --billete-2: #0b4d3e; --billete-claro: #12332b; --divisa: #18497f; --divisa-2: #123962; --divisa-claro: #142a44;
+    --aviso: #f3cf7a; --aviso-bg: #2a2210; --aviso-raya: #5a4718; --foco: #f0b63c; --ok: #5fcfa8; --mal: #ff8a7d;
+    --feriado: #ff9d90; --feriado-bg: #3b1e1b;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--papel); color: var(--tinta); font-family: var(--letra); font-size: 17px; line-height: 1.45; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; border-radius: 6px; }
+.ancho { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+/* ----- encabezado ----- */
+.cab { padding: 34px 0 6px; }
+.cab .ancho { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+h1 { margin: 0; font-family: var(--cifra); font-weight: 700; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.04; letter-spacing: -.005em; }
+.bajada { margin: 8px 0 0; color: var(--tinta-2); font-size: 18px; max-width: 46ch; }
+.quien { text-align: right; font-weight: 600; font-size: 17px; line-height: 1.25; }
+.quien span { display: block; font-weight: 400; color: var(--tinta-2); font-size: 15px; }
+
+/* ----- la fecha ----- */
+.fecha { display: flex; align-items: center; justify-content: space-between; gap: 14px 28px; flex-wrap: wrap; margin: 26px 0 0; padding: 14px 16px; background: var(--hoja); border: 1px solid var(--raya); border-radius: 16px; }
+.fecha-dia { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.paso { flex: none; width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--raya); background: var(--papel); display: grid; place-items: center; }
+.paso:hover:not(:disabled) { border-color: var(--tinta-2); }
+.paso:disabled { opacity: .35; cursor: default; }
+.paso svg { width: 20px; height: 20px; }
+.fecha-medio { width: 500px; max-width: 100%; min-width: 0; text-align: center; }
+.fecha-rot { display: block; color: var(--tinta-2); font-size: 16px; }
+#fecha-texto { border: 0; background: none; padding: 0 4px 2px; font-family: var(--cifra); font-weight: 700; font-size: clamp(24px, 3.1vw, 34px); line-height: 1.12; text-align: center; border-bottom: 2px dashed var(--raya); }
+#fecha-texto:hover { border-bottom-color: var(--tinta-2); }
+#fecha-texto::first-letter { text-transform: uppercase; }
+.elegir { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.atajo { height: 46px; padding: 0 18px; border: 1px solid var(--raya); border-radius: 10px; background: var(--hoja); font-weight: 500; }
+.atajo:hover { border-color: var(--tinta-2); }
+.atajo[aria-pressed="true"] { background: var(--tinta); color: var(--papel); border-color: var(--tinta); }
+.nota { margin: 12px 0 0; padding: 11px 16px; background: var(--hoja); color: var(--tinta-2); border: 1px solid var(--raya); border-radius: 12px; font-size: 17px; }
+.nota strong { font-weight: 600; color: var(--tinta); }
+.nota.aviso { background: var(--aviso-bg); color: var(--aviso); border-color: var(--aviso-raya); }
+.nota.aviso strong { color: inherit; }
+
+/* ----- el calendario ----- */
+.cal-boton { height: 46px; padding: 0 16px 0 13px; border: 1px solid var(--raya); border-radius: 10px; background: var(--hoja); font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+.cal-boton:hover { border-color: var(--tinta-2); }
+.cal-boton[aria-expanded="true"] { background: var(--tinta); color: var(--papel); border-color: var(--tinta); }
+.cal-boton svg { width: 19px; height: 19px; flex: none; }
+.cal { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 18px 36px; margin: 12px 0 0; padding: 18px 20px 20px; background: var(--hoja); border: 1px solid var(--raya); border-radius: 16px; }
+.cal[hidden] { display: none; }
+.cal-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
+.cal-mes { font-family: var(--cifra); font-weight: 700; font-size: 24px; }
+.cal-mes::first-letter { text-transform: uppercase; }
+.cal-paso { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--raya); background: var(--papel); display: grid; place-items: center; }
+.cal-paso:hover:not(:disabled) { border-color: var(--tinta-2); }
+.cal-paso:disabled { opacity: .35; cursor: default; }
+.cal-paso svg { width: 16px; height: 16px; }
+.cal-grilla { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-dsem { padding: 2px 0 6px; text-align: center; color: var(--tinta-2); font-size: 14px; }
+.cal-dsem abbr { text-decoration: none; }
+.cal-dia { position: relative; height: 46px; padding: 0; border: 0; border-radius: 10px; background: none; font-family: var(--cifra); font-weight: 600; font-size: 19px; font-variant-numeric: tabular-nums; }
+.cal-dia:hover:not(:disabled) { background: var(--papel); }
+.cal-dia.finde, .cal-dia.sin { color: var(--tinta-2); font-weight: 500; }
+.cal-dia.cierra { background: var(--feriado-bg); color: var(--feriado); font-weight: 700; }
+.cal-dia.raro { background: var(--aviso-bg); color: var(--aviso); font-weight: 700; }
+.cal-dia.info::after { content: ""; position: absolute; left: 50%; bottom: 6px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--feriado); }
+.cal-dia.hoy { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.cal-dia.pedido { box-shadow: inset 0 0 0 2px var(--tinta-2); }
+.cal-dia.visto { background: var(--tinta); color: var(--papel); }
+.cal-dia.visto.info::after { background: var(--papel); }
+.cal-dia:disabled { cursor: default; opacity: .45; }
+.cal-dia:disabled:not(.cierra):not(.info) { opacity: .3; }
+.cal-dia.fuera { visibility: hidden; }
+.cal-ref { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 0; color: var(--tinta-2); font-size: 14.5px; }
+.cal-ref span { display: inline-flex; align-items: center; gap: 7px; }
+.cal-ref i { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+.cal-ref .r-cierra { background: var(--feriado-bg); box-shadow: inset 0 0 0 1px var(--feriado); }
+.cal-ref .r-info { width: 6px; height: 6px; margin: 0 4px; border-radius: 50%; background: var(--feriado); }
+.cal-ref .r-visto { background: var(--tinta); }
+.cal-der h3 { margin: 6px 0 6px; font-family: var(--cifra); font-weight: 700; font-size: 20px; }
+.cal-der h3::first-letter { text-transform: uppercase; }
+.cal-lista { margin: 0; padding: 0; list-style: none; }
+.cal-lista li + li { border-top: 1px solid var(--raya-2); }
+.cal-lista button { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 12px; width: 100%; padding: 9px 6px; border: 0; border-radius: 8px; background: none; text-align: left; }
+.cal-lista button:hover:not(:disabled) { background: var(--papel); }
+.cal-lista button:disabled { cursor: default; }
+.cal-lista .cf { font-family: var(--cifra); font-weight: 700; font-size: 20px; line-height: 1.15; }
+.cal-lista .cf small { display: block; font-family: var(--letra); font-weight: 400; font-size: 14px; color: var(--tinta-2); }
+.cal-lista li.cierra .cf { color: var(--feriado); }
+.cal-lista li.raro .cf, .cal-lista li.raro .tf { color: var(--aviso); }
+.cal-lista .nf { display: block; font-weight: 500; }
+.cal-lista .tf { display: block; margin-bottom: 3px; color: var(--tinta-2); font-size: 15px; }
+.cal-vacio { margin: 4px 0 0; color: var(--tinta-2); }
+
+/* ----- la pizarra: billete y divisa ----- */
+.pizarra { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 14px 0 0; border-radius: 22px; overflow: hidden; }
+.lado { padding: 26px 30px 24px; color: var(--num); min-width: 0; }
+.lado.billete { background: linear-gradient(180deg, var(--billete), var(--billete-2)); }
+.lado.divisa { background: linear-gradient(180deg, var(--divisa), var(--divisa-2)); }
+.lado h2 { margin: 0; font-family: var(--cifra); font-weight: 700; font-size: 30px; line-height: 1.1; }
+.lado .que { margin: 2px 0 0; color: var(--num-2); font-size: 16px; }
+.par { margin: 16px 0 0; }
+.valor { display: flex; align-items: baseline; justify-content: space-between; gap: 0 16px; flex-wrap: wrap; min-width: 0; padding: 12px 0 14px; border-top: 1px solid rgba(245, 250, 248, .22); }
+.rot { font-size: 23px; font-weight: 500; color: var(--num-2); }
+.num { flex: none; max-width: 100%; margin: 0 0 0 auto; padding: 0; border: 0; background: none; color: var(--num); text-align: right; font-family: var(--cifra); font-weight: 600; font-size: clamp(56px, 7.2vw, 92px); line-height: 1; letter-spacing: -.01em; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.num .peso { font-size: .44em; font-weight: 600; vertical-align: .62em; margin-right: .18em; color: var(--num-2); }
+.num:hover:not(:disabled) { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 8px; text-decoration-color: var(--num-2); }
+.num.vacio { color: var(--num-2); cursor: default; }
+.cuando { margin: 0; padding-top: 12px; border-top: 1px solid rgba(245, 250, 248, .22); color: var(--num-2); font-size: 16.5px; }
+.cuando b { color: var(--num); font-weight: 600; white-space: nowrap; }
+.cuando.otra { color: var(--num); }
+.cuando.otra b { background: rgba(245, 250, 248, .16); border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) { .num.cambia { animation: cambia .22s ease-out; } @keyframes cambia { from { opacity: .25; transform: translateY(6px); } to { opacity: 1; transform: none; } } }
+
+/* ----- pasar dólares a pesos ----- */
+.bloque { margin: 14px 0 0; background: var(--hoja); border: 1px solid var(--raya); border-radius: 16px; }
+.bloque h2 { margin: 0; padding: 18px 22px 0; font-family: var(--cifra); font-weight: 700; font-size: 24px; }
+.cuenta { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 14px 22px 20px; }
+.monto { display: flex; align-items: center; height: 58px; border: 2px solid var(--raya); border-radius: 12px; background: var(--papel); padding: 0 14px; }
+.monto:focus-within { border-color: var(--foco); }
+.monto span { font-weight: 600; color: var(--tinta-2); margin-right: 10px; }
+.monto input { width: 9.5ch; border: 0; background: none; outline: none; font-family: var(--cifra); font-weight: 600; font-size: 30px; font-variant-numeric: tabular-nums; }
+.cual { height: 58px; padding: 0 14px; border: 2px solid var(--raya); border-radius: 12px; background: var(--papel); font-weight: 500; font-size: 18px; }
+.signo { font-family: var(--cifra); font-size: 30px; color: var(--tinta-2); }
+.resultado { border: 0; background: none; padding: 0; font-family: var(--cifra); font-weight: 700; font-size: clamp(30px, 4vw, 44px); line-height: 1; font-variant-numeric: tabular-nums; }
+.resultado:hover { text-decoration: underline; text-underline-offset: 6px; }
+.cuenta .como { flex-basis: 100%; margin: 0; color: var(--tinta-2); font-size: 16px; }
+
+/* ----- la tabla ----- */
+.tabla-caja { overflow-x: auto; padding: 8px 10px 4px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; }
+th, td { padding: 11px 12px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 600; font-size: 15px; color: var(--tinta-2); border-bottom: 2px solid var(--raya); vertical-align: bottom; }
+thead .grupo th { border-bottom: 0; padding-bottom: 0; font-family: var(--cifra); font-size: 19px; font-weight: 700; text-align: center; }
+thead .grupo .gb { color: var(--billete); } thead .grupo .gd { color: var(--divisa); }
+@media (prefers-color-scheme: dark) { thead .grupo .gb { color: #6fd0b2; } thead .grupo .gd { color: #8fbdf0; } }
+tbody td { border-bottom: 1px solid var(--raya-2); font-family: var(--cifra); font-weight: 600; font-size: 22px; }
+tbody td:first-child { font-family: var(--letra); font-weight: 500; font-size: 17px; }
+tbody td:first-child .ds { color: var(--tinta-2); font-weight: 400; margin-right: 8px; display: inline-block; min-width: 2.2em; }
+tbody td:first-child .fc { display: none; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--papel); }
+tbody tr.elegida td { background: var(--aviso-bg); }
+tbody tr.elegida td:first-child { box-shadow: inset 4px 0 0 var(--foco); }
+tbody tr.hueco td { padding-top: 8px; padding-bottom: 8px; color: var(--tinta-2); font-family: var(--letra); font-weight: 400; font-size: 15.5px; }
+tbody tr.hueco td.motivo { text-align: left; white-space: normal; }
+tbody tr.hueco td.motivo b { color: var(--feriado); font-weight: 600; }
+tbody tr.hueco.raro td.motivo, tbody tr.hueco.raro td.motivo b { color: var(--aviso); }
+tbody tr.hueco.pedida td:first-child { box-shadow: inset 4px 0 0 var(--raya); }
+td.b { background: color-mix(in srgb, var(--billete-claro) 46%, transparent); } td.d { background: color-mix(in srgb, var(--divisa-claro) 46%, transparent); }
+.mas { display: block; margin: 6px auto 14px; height: 42px; padding: 0 18px; border: 1px solid var(--raya); border-radius: 10px; background: var(--hoja); font-weight: 500; }
+.mas:hover { border-color: var(--tinta-2); }
+
+/* ----- pie ----- */
+.pie { margin: 22px 0 0; padding: 0 0 40px; color: var(--tinta-2); font-size: 15.5px; }
+.pie .ancho { display: grid; gap: 6px; }
+.pie a { color: inherit; font-weight: 600; }
+.pie strong { color: var(--tinta); font-weight: 600; }
+.pie .abajo { display: flex; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; align-items: center; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--raya); }
+.enlace { border: 0; background: none; padding: 0; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ----- actualizar ----- */
+dialog { width: min(680px, calc(100vw - 32px)); border: 1px solid var(--raya); border-radius: 18px; padding: 0; background: var(--hoja); color: var(--tinta); }
+dialog::backdrop { background: rgba(8, 16, 20, .55); }
+.dlg-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 22px 0; }
+.dlg-cab h2 { margin: 0; font-family: var(--cifra); font-size: 26px; }
+.dlg-cuerpo { padding: 8px 22px 22px; }
+.dlg-cuerpo ol { margin: 8px 0 14px; padding-left: 22px; }
+.dlg-cuerpo li { margin: 4px 0; }
+.soltar { display: block; border: 2px dashed var(--raya); border-radius: 14px; padding: 22px 16px; text-align: center; background: var(--papel); cursor: pointer; }
+.soltar.encima { border-color: var(--foco); }
+.soltar strong { display: block; font-size: 19px; }
+.informe { margin: 12px 0 0; padding: 0; list-style: none; }
+.informe li { padding: 8px 12px; border-radius: 10px; margin: 6px 0; background: var(--billete-claro); }
+.informe li.mal { background: var(--aviso-bg); color: var(--aviso); }
+.informe .elegir-clase { display: inline-flex; gap: 8px; margin-left: 8px; }
+.botones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.boton { height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--raya); background: var(--hoja); font-weight: 500; }
+.boton.primario { background: var(--tinta); color: var(--papel); border-color: var(--tinta); font-weight: 600; }
+.boton:disabled { opacity: .45; cursor: default; }
+.version { margin: 16px 0 0; color: var(--tinta-2); font-size: 14.5px; }
+.cerrar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--raya); background: var(--papel); font-size: 20px; line-height: 1; }
+.aviso-copia { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: var(--tinta); color: var(--papel); padding: 10px 18px; border-radius: 999px; font-weight: 500; pointer-events: none; opacity: 0; transition: opacity .18s; z-index: 5; }
+.aviso-copia.ver { opacity: 1; }
+
+@media (max-width: 860px) {
+  .ancho { padding: 0 16px; }
+  .cab { padding-top: 22px; } .quien { text-align: left; }
+  .pizarra { grid-template-columns: 1fr; }
+  .lado { padding: 22px 20px 20px; }
+  .rot { font-size: 20px; }
+  .num { font-size: clamp(46px, 13.5vw, 84px); }
+  .fecha { padding: 12px; justify-content: center; }
+  .fecha-dia { width: 100%; justify-content: space-between; gap: 8px; }
+  .fecha-medio { width: auto; flex: 1; }
+  .paso { width: 46px; height: 46px; }
+  th, td { padding: 10px 8px; }
+  .cal { grid-template-columns: minmax(0, 1fr); padding: 14px 14px 16px; }
+  .cal-dia { height: 42px; font-size: 17px; }
+}
+@media (max-width: 560px) {
+  .cuenta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px 16px 18px; }
+  .signo { display: none; } .monto input { width: 100%; min-width: 0; } .resultado { text-align: left; margin-top: 4px; }
+  .bloque h2 { padding: 16px 16px 0; }
+  .tabla-caja { padding: 6px 4px 2px; }
+  th, td { padding: 10px 4px; } thead th { font-family: var(--cifra); font-size: clamp(10.5px, 3.3vw, 15px); } thead .grupo th { font-size: clamp(14px, 4.3vw, 19px); }
+  tbody td { font-size: clamp(12.5px, 4.15vw, 20px); } tbody td:first-child { font-size: clamp(11.5px, 3.8vw, 16px); }
+  tbody td:first-child .ds, tbody td:first-child .fl { display: none; } tbody td:first-child .fc { display: inline; }
+  tbody tr.hueco td { font-size: clamp(11.5px, 3.6vw, 15px); }
+  .cal { padding: 12px 10px 14px; } .cal-grilla { gap: 2px; } .cal-cab { padding: 0 4px; }
+  .valor { display: block; padding: 10px 0 12px; }
+  .num { display: block; margin: 2px 0 0; text-align: left; font-size: clamp(46px, 20vw, 92px); }
+}
+@media print {
+  body { background: #fff; } .paso, .elegir, .cal, .mas, .enlace, .aviso-copia, .bloque.convertir { display: none !important; }
+  .lado, td.b, td.d, tr.elegida td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .num { animation: none !important; } #fecha-texto { border-bottom: 0; } .fecha { justify-content: center; }
+  .bloque { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="cab"><div class="ancho">
+  <div><h1>Tipos de cambio del dólar</h1><p class="bajada">Cotizaciones del Banco de la Nación Argentina: billete y divisa, comprador y vendedor.</p></div>
+  <div class="quien">Dioxitek S.A.<span>Compras</span></div>
+</div></header>
+
+<main class="ancho">
+  <section class="fecha" aria-label="Fecha de la cotización">
+    <div class="fecha-dia">
+      <button class="paso" type="button" id="antes" aria-label="Cotización anterior" title="Cotización anterior"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6"/></svg></button>
+      <div class="fecha-medio"><span class="fecha-rot">Cotización del</span><button type="button" id="fecha-texto" title="Elegir otra fecha en el calendario" aria-controls="cal"></button></div>
+      <button class="paso" type="button" id="despues" aria-label="Cotización siguiente" title="Cotización siguiente"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4l6 6-6 6"/></svg></button>
+    </div>
+    <div class="elegir">
+      <button class="cal-boton" type="button" id="abrir-cal" aria-expanded="false" aria-controls="cal"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.8" y="4" width="14.4" height="13" rx="2.2"/><path d="M2.8 8.2h14.4M6.6 2.4v3.2M13.4 2.4v3.2"/></svg>Calendario</button>
+      <button class="atajo" type="button" id="ayer">Ayer</button>
+      <button class="atajo" type="button" id="ultima" title="La cotización más reciente que hay">Última</button>
+    </div>
+  </section>
+  <section class="cal" id="cal" aria-label="Calendario con los feriados" hidden>
+    <div class="cal-izq">
+      <div class="cal-cab">
+        <button class="cal-paso" type="button" id="mes-antes" aria-label="Mes anterior" title="Mes anterior"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6"/></svg></button>
+        <div class="cal-mes" id="cal-mes" aria-live="polite"></div>
+        <button class="cal-paso" type="button" id="mes-despues" aria-label="Mes siguiente" title="Mes siguiente"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4l6 6-6 6"/></svg></button>
+      </div>
+      <div class="cal-grilla" id="cal-grilla"></div>
+      <div class="cal-ref"><span><i class="r-cierra"></i>Feriado o día sin bancos</span><span><i class="r-info"></i>No laborable optativo o feriado regional</span><span><i class="r-visto"></i>La cotización que se ve</span></div>
+    </div>
+    <div class="cal-der">
+      <h3 id="cal-titulo"></h3>
+      <ul class="cal-lista" id="cal-lista"></ul>
+      <p class="cal-vacio" id="cal-vacio" hidden></p>
+    </div>
+  </section>
+  <p class="nota" id="nota" role="status" hidden></p>
+
+  <section class="pizarra" aria-label="Cotizaciones">
+    <article class="lado billete">
+      <h2>Dólar billete</h2><p class="que">Dólares en efectivo.</p>
+      <div class="par">
+        <div class="valor"><span class="rot">Comprador</span><button class="num" type="button" data-num="billete-c"></button></div>
+        <div class="valor"><span class="rot">Vendedor</span><button class="num" type="button" data-num="billete-v"></button></div>
+      </div>
+      <p class="cuando" id="cuando-billete"></p>
+    </article>
+    <article class="lado divisa">
+      <h2>Dólar divisa</h2><p class="que">Dólares por transferencia.</p>
+      <div class="par">
+        <div class="valor"><span class="rot">Comprador</span><button class="num" type="button" data-num="divisa-c"></button></div>
+        <div class="valor"><span class="rot">Vendedor</span><button class="num" type="button" data-num="divisa-v"></button></div>
+      </div>
+      <p class="cuando" id="cuando-divisa"></p>
+    </article>
+  </section>
+
+  <section class="bloque convertir" aria-label="Pasar dólares a pesos">
+    <h2>Pasar dólares a pesos</h2>
+    <div class="cuenta">
+      <label class="monto"><span>U$S</span><input type="text" id="monto" inputmode="decimal" value="1.000,00" autocomplete="off" spellcheck="false" aria-label="Importe en dólares"></label>
+      <span class="signo" aria-hidden="true">×</span>
+      <select class="cual" id="cual" aria-label="Con qué cotización">
+        <option value="billete-v">Billete vendedor</option><option value="billete-c">Billete comprador</option>
+        <option value="divisa-v">Divisa vendedor</option><option value="divisa-c">Divisa comprador</option>
+      </select>
+      <span class="signo" aria-hidden="true">=</span>
+      <button class="resultado" type="button" id="resultado" title="Copiar"></button>
+      <p class="como" id="como"></p>
+    </div>
+  </section>
+
+  <section class="bloque" aria-label="Cotizaciones día por día">
+    <h2>Día por día</h2>
+    <div class="tabla-caja"><table>
+      <thead>
+        <tr class="grupo"><th></th><th colspan="2" class="gb">Dólar billete</th><th colspan="2" class="gd">Dólar divisa</th></tr>
+        <tr><th scope="col">Fecha</th><th scope="col">Comprador</th><th scope="col">Vendedor</th><th scope="col">Comprador</th><th scope="col">Vendedor</th></tr>
+      </thead>
+      <tbody id="filas"></tbody>
+    </table></div>
+    <button class="mas" type="button" id="mas">Ver más días</button>
+  </section>
+</main>
+
+<footer class="pie"><div class="ancho">
+  <div>En pesos por dólar. Si un día no tiene cotización (fin de semana, feriado), vale la última anterior.</div>
+  <div>Fuente: Banco de la Nación Argentina, <a href="https://www.bna.com.ar/Personas" target="_blank" rel="noopener noreferrer">bna.com.ar</a>. La cotización oficial es la que publica el banco.</div>
+  <div>Feriados: el calendario oficial del Ministerio del Interior, <a href="https://www.argentina.gob.ar/feriados" target="_blank" rel="noopener noreferrer">argentina.gob.ar/feriados</a>, más los días sin bancos que no están ahí (el Día del Bancario y los feriados bancarios del BCRA).</div>
+  <div>La tabla al día, para abrir desde cualquier computadora o celular: <a href="https://elvischatzky.github.io/tipos-de-cambio/" target="_blank" rel="noopener noreferrer">elvischatzky.github.io/tipos-de-cambio</a>.</div>
+  <div id="estado-datos"></div>
+  <div class="abajo"><span>Hecho por <strong>Elvis Chatzky</strong> · GAyGC, Dioxitek</span><button class="enlace" type="button" id="abrir-actualizar">Actualizar los datos</button></div>
+</div></footer>
+
+<dialog id="dlg" aria-labelledby="dlg-titulo">
+  <div class="dlg-cab"><h2 id="dlg-titulo">Actualizar los datos</h2><button class="cerrar" type="button" id="cerrar" aria-label="Cerrar">×</button></div>
+  <div class="dlg-cuerpo">
+    <ol>
+      <li>En bna.com.ar, en «Cotización Billetes», tocá <strong>Ver histórico</strong>. En «Descarga por rango de fechas» elegí la moneda Dolar U.S.A, las fechas (desde unos días antes de la última que hay acá) y <strong>Descargar</strong>.</li>
+      <li>Hacé lo mismo en «Cotización Divisas».</li>
+      <li>Traé acá los dos archivos .csv.</li>
+    </ol>
+    <label class="soltar" id="soltar"><strong>Arrastrá acá los .csv del BNA</strong><span>o hacé clic para elegirlos</span><input type="file" id="archivos" accept=".csv,text/csv" multiple hidden></label>
+    <ul class="informe" id="informe"></ul>
+    <div class="botones">
+      <button class="boton primario" type="button" id="guardar-copia">Guardar una copia para compartir</button>
+      <button class="boton" type="button" id="borrar-cargado">Sacar lo que cargué acá</button>
+    </div>
+    <p class="version">Versión del 11/11/2026, 11:40</p>
+  </div>
+</dialog>
+<div class="aviso-copia" id="aviso-copia" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="datos">/*DATOS*/</script>
+<script>
+"use strict";
+/* Tipos de cambio del dólar (BNA) · hecho por Elvis Chatzky.
+   Los datos vienen adentro del archivo (los pone actualizar.py, que los baja del BNA) y se pueden sumar arrastrando los .csv del BNA: lo
+   cargado así queda en esta computadora. La página no se conecta a nada. */
+const ORIGINAL = "<!doctype html>\n" + document.documentElement.outerHTML;  // tal cual llegó, para guardar una copia con los datos al día
+const $ = (id) => document.getElementById(id);
+const GUARDADO = "tipos-de-cambio.cargado", GUARDADO_CUAL = "tipos-de-cambio.cuenta";
+const CLASES = ["billete", "divisa"];
+const NOMBRE = { billete: "Dólar billete", divisa: "Dólar divisa" };
+
+/* ----- fechas (siempre «AAAA-MM-DD», en la hora de esta computadora) ----- */
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const aFecha = (s) => { const [a, m, d] = s.split("-").map(Number); return new Date(a, m - 1, d, 12); };
+const correr = (s, dias) => { const d = aFecha(s); d.setDate(d.getDate() + dias); return iso(d); };
+const hoy = () => iso(new Date());
+const largo = new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const diaSemana = new Intl.DateTimeFormat("es-AR", { weekday: "long" }), diaCorto = new Intl.DateTimeFormat("es-AR", { weekday: "short" });
+const fechaLarga = (s) => largo.format(aFecha(s));
+const fechaNum = (s) => { const [a, m, d] = s.split("-"); return `${d}/${m}/${a}`; };
+const fechaConDia = (s) => `${diaSemana.format(aFecha(s))} ${fechaNum(s)}`;
+const esFinde = (s) => [0, 6].includes(aFecha(s).getDay());
+
+/* ----- números ----- */
+const fCot = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const fPesos = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// «1.000,50», «1000,5», «1000.5», «1,000.50»: con los dos signos, el último es el de los decimales; con uno solo, el punto de miles es «1.000»
+function leerImporte(t) {
+  let s = String(t).replace(/[^\d.,]/g, "");
+  if (!/\d/.test(s)) return null;
+  const p = s.lastIndexOf("."), c = s.lastIndexOf(",");
+  if (p >= 0 && c >= 0) s = p > c ? s.replace(/,/g, "") : s.replace(/\./g, "").replace(",", ".");
+  else if (c >= 0) s = s.replace(/,(?=.*,)/g, "").replace(",", ".");
+  else if (p >= 0 && /^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  else if (p >= 0) s = s.replace(/\.(?=.*\.)/g, "");
+  const v = Number(s);
+  return Number.isFinite(v) ? v : null;
+}
+
+/* ----- los datos: «AAMMDD compra venta|…» por clase ----- */
+function deCompacto(t) {
+  const m = new Map();
+  for (const fila of String(t || "").split("|")) {
+    const x = /^(\d{2})(\d{2})(\d{2}) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/.exec(fila.trim());
+    if (x) m.set(`20${x[1]}-${x[2]}-${x[3]}`, [Number(x[4]), Number(x[5])]);
+  }
+  return m;
+}
+const aCompacto = (m) => [...m.keys()].sort().map((k) => `${k.slice(2, 4)}${k.slice(5, 7)}${k.slice(8, 10)} ${m.get(k)[0]} ${m.get(k)[1]}`).join("|");
+let DATOS = {};
+try { DATOS = JSON.parse($("datos").textContent); } catch { DATOS = {}; }
+const DE_FABRICA = { billete: deCompacto(DATOS.billete), divisa: deCompacto(DATOS.divisa) };
+// el calendario: feriados nacionales y días no laborables (Ministerio del Interior) y días sin bancos (Día del Bancario, BCRA).
+// Cada día: [fecha, clase, nombre, etiqueta, si cierran los bancos, cómo se dice, fuente]; lo arma armar.py desde feriados.json
+const FER = new Map(), ANIOS_CAL = new Set((((DATOS.feriados || {}).años) || []).map(Number));
+for (const [fecha, clase, nombre, etiqueta, cierra, frase, fuente] of ((DATOS.feriados || {}).dias) || []) {
+  if (!FER.has(fecha)) FER.set(fecha, []);
+  FER.get(fecha).push({ clase, nombre, etiqueta, cierra: !!cierra, frase, fuente: fuente || "" });
+}
+const PRIORIDAD = ["nacional", "turistico", "bancario", "no_laborable"];
+// por qué no abren los bancos ese día (null si abren)
+const cierre = (d) => (FER.get(d) || []).filter((x) => x.cierra).sort((a, b) => PRIORIDAD.indexOf(a.clase) - PRIORIDAD.indexOf(b.clase))[0] || null;
+function leerGuardado() { try { return JSON.parse(localStorage.getItem(GUARDADO) || "null"); } catch { return null; } }
+// pedida: la fecha que se pidió (al entrar, ayer). fecha: la de la cotización que se ve, que es la de ese día o, si ese día no hubo, la última anterior
+const E = { mapa: {}, dias: {}, todos: [], con: new Set(), actualizado: null, cargado: null, pedida: null, antes: false, fecha: null, filas: 10, mes: null, foco: null };
+function armarDatos() {
+  const g = leerGuardado(); E.cargado = g;
+  for (const c of CLASES) {
+    E.mapa[c] = new Map(DE_FABRICA[c]);
+    if (g && g[c]) for (const [k, v] of deCompacto(g[c])) E.mapa[c].set(k, v);
+    E.dias[c] = [...E.mapa[c].keys()].sort();
+  }
+  E.todos = [...new Set([...E.dias.billete, ...E.dias.divisa])].sort(); E.con = new Set(E.todos);
+  const cuando = [DATOS.actualizado, g && g.cuando].map((x) => (x ? new Date(x) : null)).filter((d) => d && !Number.isNaN(d.getTime())).sort((a, b) => a - b).pop();
+  E.actualizado = cuando || null;
+}
+// la cotización que vale ese día: la de ese día o, si no hay, la última anterior
+function cotizacion(clase, fecha) {
+  const ds = E.dias[clase]; let a = 0, b = ds.length - 1, k = -1;
+  while (a <= b) { const m = (a + b) >> 1; if (ds[m] <= fecha) { k = m; a = m + 1; } else b = m - 1; }
+  if (k < 0) return null;
+  const [c, v] = E.mapa[clase].get(ds[k]);
+  return { fecha: ds[k], c, v };
+}
+const primerDia = () => CLASES.map((c) => E.dias[c][0]).filter(Boolean).sort()[0] || null;
+const ultimoDia = () => CLASES.map((c) => E.dias[c][E.dias[c].length - 1]).filter(Boolean).sort().pop() || null;
+const todosLosDias = () => E.todos;
+// el día con cotización que vale para una fecha: ese día o el último anterior (si la fecha es anterior a todos, el primero)
+function resolver(fecha) {
+  const ds = E.todos; let a = 0, b = ds.length - 1, k = -1;
+  while (a <= b) { const m = (a + b) >> 1; if (ds[m] <= fecha) { k = m; a = m + 1; } else b = m - 1; }
+  return k >= 0 ? ds[k] : ds[0] || fecha;
+}
+
+/* ----- pintar ----- */
+const html = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const horaDe = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+const diaYmes = (d) => `${diaSemana.format(aFecha(d))} ${Number(d.slice(8))}/${Number(d.slice(5, 7))}`;
+// por qué se ve la cotización de un día anterior al pedido: los días hábiles del medio se buscan en el calendario. Si todos fueron feriados
+// o días sin bancos, se dice cuáles. Si alguno no figura: es hoy (todavía no está), los datos son viejos, o el BNA no publicó (se avisa)
+function motivo(p) {
+  const f = E.fecha, act = E.actualizado, diaAct = act ? iso(act) : null, h = hoy();
+  const habiles = []; for (let d = correr(f, 1); d <= p; d = correr(d, 1)) if (!esFinde(d)) habiles.push(d);
+  const suelto = habiles.find((d) => !cierre(d));
+  if (suelto === h) return { aviso: false, texto: `La cotización de hoy todavía no está en estos datos${act ? ` (actualizados${diaAct === h ? "" : ` el ${fechaNum(diaAct)}`} a las ${horaDe(act)})` : ""}. Esta es la última.` };
+  if (suelto && diaAct && suelto < diaAct) {
+    const anio = Number(suelto.slice(0, 4));
+    return { aviso: true, texto: ANIOS_CAL.has(anio)
+      ? `El BNA no publicó cotización el ${html(fechaConDia(suelto))}, y ese día no figura como feriado ni como día sin bancos. Esta es la última anterior.`
+      : `El BNA no publicó cotización el ${html(fechaConDia(suelto))}; el calendario de feriados de ${anio} todavía no está en estos datos. Esta es la última anterior.` };
+  }
+  if (suelto) return { aviso: true, texto: `Estos datos se actualizaron${act ? ` el ${fechaNum(diaAct)} a las ${horaDe(act)}` : " hace tiempo"} y no traen cotizaciones posteriores. Esta es la última que traen.` };
+  const sujeto = p === h ? `Hoy, ${html(fechaConDia(p))},` : p === correr(h, -1) ? `Ayer, ${html(fechaConDia(p))},` : `El ${html(fechaConDia(p))}`;
+  const primera = esFinde(p) ? `${sujeto} no hubo cotización (fin de semana)` : `${sujeto} fue ${html(cierre(p).frase)}`;
+  const otros = habiles.filter((d) => d !== p).reverse().map((d) => `el ${diaYmes(d)}, ${html(cierre(d).frase)}`);
+  const lista = otros.length > 3 ? [...otros.slice(0, 2), `${otros.length - 2} días hábiles más sin bancos`] : otros;
+  const resto = lista.length > 1 ? `${lista.slice(0, -1).join(", ")} y ${lista[lista.length - 1]}` : lista[0];
+  return { aviso: false, texto: `${primera}${resto ? `; ${resto}` : ""}. Esta es la última cotización anterior.` };
+}
+function notaDe(p, f, q) {
+  if (!primerDia()) return { aviso: true, texto: "Este archivo no trae cotizaciones. Cargalas con «Actualizar los datos», abajo." };
+  const partes = []; let aviso = false;
+  if (E.antes) partes.push(`Las cotizaciones de esta tabla empiezan el ${fechaNum(primerDia())}.`);
+  else if (p !== f) { const m = motivo(p); partes.push(m.texto); aviso = m.aviso; }
+  else if (cierre(f)) partes.push(`Ese día figura como ${html(cierre(f).etiqueta.toLowerCase())} (${html(cierre(f).nombre)}), pero el BNA publicó cotización.`);
+  // una de las dos clases puede venir atrasada (el BNA publica la divisa al cierre)
+  for (const c of CLASES) {
+    if (q[c] && q[c].fecha !== f) partes.push(`Del ${NOMBRE[c].toLowerCase()} todavía no está la cotización del ${html(fechaConDia(f))}: se muestra la última anterior, <strong>${html(fechaConDia(q[c].fecha))}</strong>.${c === "divisa" && f === hoy() ? " El BNA la publica al cierre del día." : ""}`);
+    else if (!q[c]) partes.push(`Del ${NOMBRE[c].toLowerCase()} no hay cotizaciones hasta ese día.`);
+  }
+  return { aviso, texto: partes.join(" ") };
+}
+let anterior = "";
+function pintar() {
+  // la fecha de arriba es siempre la de la cotización que se ve
+  const p = E.pedida, f = E.fecha = resolver(p), q = { billete: cotizacion("billete", f), divisa: cotizacion("divisa", f) };
+  $("fecha-texto").textContent = fechaLarga(f);
+  $("ayer").setAttribute("aria-pressed", String(p === correr(hoy(), -1))); $("ultima").setAttribute("aria-pressed", String(!!primerDia() && p === resolver(hoy())));
+  const nota = notaDe(p, f, q);
+  $("nota").hidden = !nota.texto; $("nota").innerHTML = nota.texto; $("nota").classList.toggle("aviso", nota.aviso);
+  const firma = JSON.stringify(q);
+  for (const c of CLASES) {
+    for (const lado of ["c", "v"]) {
+      const b = document.querySelector(`[data-num="${c}-${lado}"]`), v = q[c] ? q[c][lado] : null;
+      b.innerHTML = v === null ? "—" : `<span class="peso">$</span>${fCot.format(v)}`;
+      b.classList.toggle("vacio", v === null); b.disabled = v === null;
+      b.dataset.copiar = v === null ? "" : fCot.format(v);
+      b.setAttribute("aria-label", v === null ? `${NOMBRE[c]} ${lado === "c" ? "comprador" : "vendedor"}: sin dato` : `${NOMBRE[c]} ${lado === "c" ? "comprador" : "vendedor"}: ${fCot.format(v)} pesos. Copiar`);
+      if (firma !== anterior) { b.classList.remove("cambia"); void b.offsetWidth; b.classList.add("cambia"); }
+    }
+    $(`cuando-${c}`).innerHTML = q[c] ? `Pesos por dólar. Cotización del <b>${html(fechaConDia(q[c].fecha))}</b>.` : "Sin cotización para esa fecha.";
+    $(`cuando-${c}`).classList.toggle("otra", !!q[c] && q[c].fecha !== f);
+  }
+  anterior = firma; ajustar();
+  // los pasos: a la cotización de antes y a la de después
+  $("antes").disabled = !diaAntes(); $("despues").disabled = !diaDespues();
+  pintarCuenta(q); pintarTabla();
+  const ult = ultimoDia(), act = E.actualizado;
+  const anios = [...ANIOS_CAL].sort();
+  $("estado-datos").innerHTML = (ult ? `Cotizaciones del ${fechaNum(primerDia())} al <strong>${fechaNum(ult)}</strong>${act ? `. Datos actualizados el ${fechaNum(iso(act))} a las ${horaDe(act)}` : ""}${E.cargado ? " (con lo que se cargó en esta computadora)" : ""}.` : "")
+    + (anios.length ? ` Calendario de feriados de ${anios.length > 1 ? `${anios.slice(0, -1).join(", ")} y ${anios[anios.length - 1]}` : anios[0]}.` : "");
+  if ($("cal").hidden) { E.mes = E.pedida.slice(0, 7); E.foco = E.pedida; }
+  pintarCal();
+}
+// si un número no entra en su renglón (pantalla angosta, cuatro decimales), se achica hasta que entre
+function ajustar() {
+  for (const b of document.querySelectorAll(".num")) {
+    b.style.fontSize = "";
+    const lugar = b.parentElement.clientWidth; let t = parseFloat(getComputedStyle(b).fontSize);
+    while (lugar > 0 && b.getBoundingClientRect().width > lugar && t > 26) { t -= 2; b.style.fontSize = `${t}px`; }
+  }
+}
+function pintarCuenta(q) {
+  const [c, lado] = $("cual").value.split("-"), monto = leerImporte($("monto").value), x = q[c] ? q[c][lado] : null, r = $("resultado");
+  if (monto === null || x === null) { r.textContent = "—"; r.disabled = true; r.dataset.copiar = ""; $("como").textContent = x === null ? "No hay cotización para esa fecha." : "Escribí el importe en dólares."; return; }
+  const pesos = Math.round(monto * x * 100) / 100;
+  r.textContent = `$ ${fPesos.format(pesos)}`; r.disabled = false; r.dataset.copiar = fPesos.format(pesos);
+  $("como").textContent = `U$S ${fPesos.format(monto)} × ${fCot.format(x)} (${NOMBRE[c].toLowerCase()}, ${lado === "c" ? "comprador" : "vendedor"}, del ${fechaNum(q[c].fecha)}).`;
+}
+const diaAntes = () => { const ds = E.todos, i = ds.indexOf(E.fecha); return i > 0 ? ds[i - 1] : null; };
+const diaDespues = () => { const ds = E.todos, i = ds.indexOf(E.fecha), s = i >= 0 ? ds[i + 1] : null; return s && s <= hoy() ? s : null; };
+function pintarTabla() {
+  const mostrada = E.fecha, dias = todosLosDias().filter((d) => d <= E.fecha).reverse(), ver = dias.slice(0, E.filas);
+  const celda = (c, d, i) => { const v = E.mapa[c].get(d); return `<td class="${c[0]}">${v ? fCot.format(v[i]) : "—"}</td>`; };
+  const fechaCelda = (d) => `<td><span class="ds">${html(diaCorto.format(aFecha(d)).replace(".", ""))}</span><span class="fl">${fechaNum(d)}</span><span class="fc">${fechaNum(d).slice(0, 6)}${d.slice(2, 4)}</span></td>`;
+  // los días hábiles sin cotización entre las filas (y hasta la fecha pedida): con su feriado, o marcados si no figuran en el calendario
+  const diaAct = E.actualizado ? iso(E.actualizado) : null, hasta = ver.length ? ver[ver.length - 1] : null, filas = [...ver];
+  if (hasta) for (let d = E.pedida; d > hasta; d = correr(d, -1)) if (!esFinde(d) && !E.con.has(d) && (cierre(d) || (diaAct && d < diaAct))) filas.push(d);
+  filas.sort().reverse();
+  $("filas").innerHTML = filas.map((d) => {
+    if (E.con.has(d)) return `<tr data-fecha="${d}" class="${d === mostrada ? "elegida" : ""}" tabindex="0" aria-label="Ver la cotización del ${fechaNum(d)}">${fechaCelda(d)}${celda("billete", d, 0)}${celda("billete", d, 1)}${celda("divisa", d, 0)}${celda("divisa", d, 1)}</tr>`;
+    const c = cierre(d), que = c ? `<b>${html(c.etiqueta)}</b> · ${html(c.nombre)}` : "Sin cotización del BNA, y no figura como feriado ni como día sin bancos";
+    return `<tr data-fecha="${d}" class="hueco${c ? "" : " raro"}${d === E.pedida ? " pedida" : ""}" tabindex="0" aria-label="${fechaNum(d)}: sin cotización. ${html(c ? `${c.etiqueta}: ${c.nombre}` : "No figura como feriado")}">${fechaCelda(d)}<td class="motivo" colspan="4">${que}</td></tr>`;
+  }).join("") || `<tr><td colspan="5">No hay cotizaciones hasta esa fecha.</td></tr>`;
+  $("mas").hidden = dias.length <= E.filas;
+}
+function irA(fecha) {
+  const min = primerDia(), max = hoy();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || "")) { pintar(); return; }
+  E.antes = !!min && fecha < min;
+  E.pedida = fecha > max ? max : E.antes ? min : fecha; E.filas = 10;
+  E.mes = E.pedida.slice(0, 7); E.foco = E.pedida; pintar();
+}
+
+/* ----- el calendario del mes, con los feriados ----- */
+const fMes = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }), fMesSolo = new Intl.DateTimeFormat("es-AR", { month: "long" });
+const DSEM = [["lu", "lunes"], ["ma", "martes"], ["mi", "miércoles"], ["ju", "jueves"], ["vi", "viernes"], ["sá", "sábado"], ["do", "domingo"]];
+const mayus = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const correrMes = (mes, n) => { const [a, m] = mes.split("-").map(Number), x = new Date(a, m - 1 + n, 1, 12); return iso(x).slice(0, 7); };
+const largoMes = (mes) => { const [a, m] = mes.split("-").map(Number); return new Date(a, m, 0).getDate(); };
+// se puede ir hasta el último mes que tiene calendario de feriados (para ver los que vienen), aunque esos días no se puedan elegir
+const mesMax = () => [hoy().slice(0, 7), ...[...ANIOS_CAL].map((a) => `${a}-12`)].sort().pop();
+// lo que no cierra entre el calendario y el BNA: un día hábil sin cotización ni feriado (ya pasado) o un día sin bancos con cotización
+function raro(d) {
+  const diaAct = E.actualizado ? iso(E.actualizado) : null, min = primerDia(), con = E.con.has(d), c = cierre(d);
+  return con ? !!c : !c && !esFinde(d) && !!diaAct && d < diaAct && !!min && d > min;
+}
+function pintarCal() {
+  const mes = E.mes, [a, m] = mes.split("-").map(Number), uno = new Date(a, m - 1, 1, 12), h = hoy(), min = primerDia();
+  $("cal-mes").textContent = fMes.format(uno);
+  $("mes-antes").disabled = !!min && correrMes(mes, -1) < min.slice(0, 7); $("mes-despues").disabled = correrMes(mes, 1) > mesMax();
+  let celdas = DSEM.map(([c, l]) => `<div class="cal-dsem"><abbr title="${l}">${c}</abbr></div>`).join("");
+  for (let i = (uno.getDay() + 6) % 7; i > 0; i--) celdas += `<span class="cal-dia fuera" aria-hidden="true"></span>`;
+  const lista = []; let primero = null;
+  for (let i = 1; i <= largoMes(mes); i++) {
+    const d = `${mes}-${String(i).padStart(2, "0")}`, fs = FER.get(d) || [], c = cierre(d), con = E.con.has(d), r = raro(d), fuera = d > h || (!!min && d < min);
+    const cl = ["cal-dia"];
+    if (esFinde(d)) cl.push("finde");
+    if (r) cl.push("raro"); else if (c) cl.push("cierra"); else if (fs.length) cl.push("info");
+    if (!con && !c && !esFinde(d) && !fuera) cl.push("sin");
+    if (d === h) cl.push("hoy");
+    if (d === E.fecha) cl.push("visto"); else if (d === E.pedida) cl.push("pedido");
+    const que = fs.map((x) => `${x.nombre} (${x.etiqueta.toLowerCase()})`);
+    if (!fuera && !con) que.push("sin cotización"); else if (con && c) que.push("el BNA publicó cotización");
+    if (!fuera && !primero) primero = d;
+    celdas += `<button type="button" class="${cl.join(" ")}" data-dia="${d}" tabindex="-1" aria-label="${html([mayus(fechaLarga(d)), ...que].join(". "))}"${fs.length ? ` title="${html(fs.map((x) => x.nombre).join(" · "))}"` : ""}${d === E.fecha ? ' aria-current="date"' : ""}${fuera ? " disabled" : ""}>${i}</button>`;
+    if (fs.length || r) lista.push(d);
+  }
+  $("cal-grilla").innerHTML = celdas;
+  const foco = [E.foco, E.fecha, E.pedida, primero].find((d) => d && d.slice(0, 7) === mes && d <= h && (!min || d >= min));
+  const b = foco && $("cal-grilla").querySelector(`[data-dia="${foco}"]`); if (b) b.tabIndex = 0;
+  // la lista de los feriados del mes (también los que vienen)
+  $("cal-titulo").textContent = `Feriados de ${fMesSolo.format(uno)}`;
+  $("cal-lista").innerHTML = lista.map((d) => {
+    const fs = FER.get(d) || [], c = cierre(d), r = raro(d);
+    const nombres = fs.map((x) => `<span class="nf">${html(x.nombre)}</span><span class="tf">${html(x.etiqueta)}${x.fuente ? ` · ${html(x.fuente)}` : ""}</span>`).join("");
+    const extra = r ? `<span class="tf">${E.con.has(d) ? "El BNA publicó cotización ese día." : "El BNA no publicó cotización, y no figura como feriado ni como día sin bancos."}</span>` : "";
+    return `<li class="${r ? "raro" : c ? "cierra" : ""}"><button type="button" data-dia="${d}"${d > h ? " disabled" : ""}><span class="cf">${Number(d.slice(8))}<small>${html(diaCorto.format(aFecha(d)).replace(".", ""))}</small></span><span>${nombres}${extra}</span></button></li>`;
+  }).join("");
+  const sinCal = !ANIOS_CAL.has(a);
+  $("cal-vacio").hidden = lista.length > 0 && !sinCal;
+  $("cal-vacio").textContent = sinCal ? `El calendario de feriados de ${a} todavía no está en estos datos.` : "Este mes no hay feriados ni días sin bancos.";
+}
+function abrirCal(abrir) {
+  const c = $("cal"), ver = abrir === undefined ? c.hidden : abrir;
+  c.hidden = !ver; $("abrir-cal").setAttribute("aria-expanded", String(ver));
+  if (!ver) return;
+  E.mes = E.pedida.slice(0, 7); E.foco = E.pedida; pintarCal();
+  const b = $("cal-grilla").querySelector('[tabindex="0"]'); if (b) b.focus({ preventScroll: true });
+  try { c.scrollIntoView({ block: "nearest" }); } catch { /* nada */ }
+}
+
+/* ----- copiar ----- */
+let quitar = null;
+async function copiar(texto, que) {
+  if (!texto) return;
+  let bien = false;
+  try { await navigator.clipboard.writeText(texto); bien = true; } catch {
+    const t = document.createElement("textarea"); t.value = texto; t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select();
+    try { bien = document.execCommand("copy"); } catch { bien = false; } t.remove();
+  }
+  const a = $("aviso-copia"); a.textContent = bien ? `Copiado: ${que || texto}` : "No se pudo copiar"; a.classList.add("ver"); clearTimeout(quitar); quitar = setTimeout(() => a.classList.remove("ver"), 1600);
+}
+
+/* ----- cargar los .csv del BNA («Moneda;Fecha cotizacion;Compra;Venta;») ----- */
+function leerCsvBna(texto) {
+  const lineas = String(texto).replace(/^﻿/, "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!lineas.length || !/^Moneda;Fecha\s+cotizaci/i.test(lineas[0])) return { error: "no es un .csv de cotizaciones del BNA (tiene que empezar con «Moneda;Fecha cotizacion;Compra;Venta;»)" };
+  const m = new Map(); let otras = 0, malas = 0;
+  for (const l of lineas.slice(1)) {
+    const [moneda, fecha, compra, venta] = l.split(";").map((x) => x.trim());
+    if (!/^dolar\s+u\.?\s?s\.?\s?a\.?$/i.test(moneda || "")) { otras++; continue; }
+    const f = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(fecha || ""), n = (x) => (/^\d+(?:,\d+)?$/.test(x || "") ? Number(x.replace(",", ".")) : NaN), c = n(compra), v = n(venta);
+    const d = f ? new Date(Number(f[3]), Number(f[2]) - 1, Number(f[1]), 12) : null;
+    if (!f || !d || d.getDate() !== Number(f[1]) || d.getMonth() !== Number(f[2]) - 1 || !(c > 0) || !(v >= c) || v > c * 1.5) { malas++; continue; }
+    m.set(iso(d), [c, v]);
+  }
+  if (!m.size) return { error: otras ? "no trae cotizaciones del Dolar U.S.A (elegí esa moneda al bajarlo)" : "no trae ninguna cotización que se pueda leer" };
+  return { m, malas };
+}
+// de billetes o de divisas: el archivo no lo dice. Lo dice el nombre o la diferencia entre comprador y vendedor (billete: varios puntos; divisa: menos de 1 %)
+function claseDe(nombre, m) {
+  const n = String(nombre).toLowerCase();
+  if (/billete/.test(n)) return "billete";
+  if (/divisa/.test(n)) return "divisa";
+  const difs = [...m.values()].map(([c, v]) => (v - c) / v).sort((a, b) => a - b), med = difs[Math.floor(difs.length / 2)];
+  return med >= 0.02 ? "billete" : med <= 0.012 ? "divisa" : null;
+}
+const pendientes = [];  // archivos leídos que esperan que se diga de qué clase son
+function sumar(clase, m, nombre, bajado) {
+  const g = leerGuardado() || {}, propio = deCompacto(g[clase]); let nuevos = 0, cambiados = 0;
+  for (const [k, v] of m) {
+    const ya = E.mapa[clase].get(k);
+    if (!ya) nuevos++; else if (ya[0] !== v[0] || ya[1] !== v[1]) cambiados++;
+    const fab = DE_FABRICA[clase].get(k);
+    if (!fab || fab[0] !== v[0] || fab[1] !== v[1]) propio.set(k, v);
+  }
+  // los datos están al día de cuando se bajó el .csv (la fecha del archivo)
+  const ahora = Date.now(), del = Number.isFinite(bajado) && bajado > 0 && bajado < ahora ? bajado : ahora, antes = g.cuando ? new Date(g.cuando).getTime() : 0;
+  g[clase] = aCompacto(propio); g.cuando = new Date(Math.max(del, antes || 0)).toISOString();
+  let guardo = true; try { localStorage.setItem(GUARDADO, JSON.stringify(g)); } catch { guardo = false; }
+  const ds = [...m.keys()].sort();
+  informar(`<strong>${html(nombre)}</strong>: ${clase === "billete" ? "billetes" : "divisas"}, del ${fechaNum(ds[0])} al ${fechaNum(ds[ds.length - 1])}. ${nuevos ? `${nuevos} ${nuevos === 1 ? "día nuevo" : "días nuevos"}` : "Ningún día nuevo"}${cambiados ? ` y ${cambiados} ${cambiados === 1 ? "corregido" : "corregidos"}` : ""}.${guardo ? "" : " No se pudo guardar en esta computadora: guardá una copia."}`);
+  armarDatos(); pintar();
+}
+function informar(texto, mal = false, extra = "") { const li = document.createElement("li"); if (mal) li.className = "mal"; li.innerHTML = texto + extra; $("informe").appendChild(li); return li; }
+async function cargarArchivos(lista) {
+  for (const a of lista) {
+    const r = leerCsvBna(await a.text());
+    if (r.error) { informar(`<strong>${html(a.name)}</strong>: ${html(r.error)}.`, true); continue; }
+    const clase = claseDe(a.name, r.m);
+    if (clase) sumar(clase, r.m, a.name, a.lastModified);
+    else { const i = pendientes.push({ m: r.m, nombre: a.name, bajado: a.lastModified }) - 1; informar(`<strong>${html(a.name)}</strong>: ¿es de billetes o de divisas?`, true, `<span class="elegir-clase"><button class="boton" type="button" data-clase="billete" data-pend="${i}">Billetes</button><button class="boton" type="button" data-clase="divisa" data-pend="${i}">Divisas</button></span>`); }
+  }
+}
+// una copia de esta página con todas las cotizaciones adentro (las de fábrica y las cargadas), para compartir
+function guardarCopia() {
+  const datos = { fuente: DATOS.fuente || "Banco de la Nación Argentina (bna.com.ar)", actualizado: (E.actualizado || new Date()).toISOString(), billete: aCompacto(E.mapa.billete), divisa: aCompacto(E.mapa.divisa), feriados: DATOS.feriados || null };
+  const pagina = ORIGINAL.replace(/(<script type="application\/json" id="datos">)[\s\S]*?(<\/script>)/, (_, a, b) => a + JSON.stringify(datos).replace(/</g, "\\u003c") + b);
+  const url = URL.createObjectURL(new Blob([pagina], { type: "text/html;charset=utf-8" })), a = document.createElement("a");
+  a.href = url; a.download = "Tipos de cambio.html"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ----- eventos ----- */
+$("abrir-cal").addEventListener("click", () => abrirCal());
+$("fecha-texto").addEventListener("click", () => abrirCal());
+$("mes-antes").addEventListener("click", () => { E.mes = correrMes(E.mes, -1); E.foco = null; pintarCal(); });
+$("mes-despues").addEventListener("click", () => { E.mes = correrMes(E.mes, 1); E.foco = null; pintarCal(); });
+// en la grilla: las flechas mueven el día; RePág y AvPág, el mes; Inicio y Fin, al primero y al último del mes
+$("cal-grilla").addEventListener("keydown", (e) => {
+  const b = e.target.closest("[data-dia]"); if (!b) return;
+  const pasos = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }, de = b.dataset.dia;
+  let d;
+  if (e.key in pasos) d = correr(de, pasos[e.key]);
+  else if (e.key === "PageUp" || e.key === "PageDown") { const m = correrMes(de.slice(0, 7), e.key === "PageUp" ? -1 : 1); d = `${m}-${String(Math.min(Number(de.slice(8)), largoMes(m))).padStart(2, "0")}`; }
+  else if (e.key === "Home") d = `${de.slice(0, 7)}-01`;
+  else if (e.key === "End") d = `${de.slice(0, 7)}-${largoMes(de.slice(0, 7))}`;
+  else return;
+  e.preventDefault(); e.stopPropagation();  // la grilla se vuelve a dibujar: que las flechas no lleguen además a «cotización anterior / siguiente»
+  const min = primerDia(), h = hoy(); if (d > h) d = h; if (min && d < min) d = min;
+  E.foco = d; E.mes = d.slice(0, 7); pintarCal();
+  const n = $("cal-grilla").querySelector(`[data-dia="${d}"]`); if (n) n.focus();
+});
+$("ayer").addEventListener("click", () => irA(correr(hoy(), -1)));
+// la cotización más reciente que hay hasta hoy: su fecha es la que queda arriba
+$("ultima").addEventListener("click", () => { if (primerDia()) irA(resolver(hoy())); });
+$("antes").addEventListener("click", () => { const d = diaAntes(); if (d) irA(d); });
+$("despues").addEventListener("click", () => { const d = diaDespues(); if (d) irA(d); });
+$("monto").addEventListener("input", () => pintarCuenta({ billete: cotizacion("billete", E.fecha), divisa: cotizacion("divisa", E.fecha) }));
+$("monto").addEventListener("blur", (e) => { const v = leerImporte(e.target.value); if (v !== null) e.target.value = fPesos.format(v); });
+$("cual").addEventListener("change", (e) => { try { localStorage.setItem(GUARDADO_CUAL, e.target.value); } catch { /* nada */ } pintarCuenta({ billete: cotizacion("billete", E.fecha), divisa: cotizacion("divisa", E.fecha) }); });
+let espera = null;
+window.addEventListener("resize", () => { clearTimeout(espera); espera = setTimeout(ajustar, 80); });
+$("mas").addEventListener("click", () => { E.filas += 20; pintarTabla(); });
+document.addEventListener("click", (e) => {
+  const n = e.target.closest("[data-num]"); if (n) { const [c, lado] = n.dataset.num.split("-"); copiar(n.dataset.copiar, `${n.dataset.copiar} (${NOMBRE[c].toLowerCase()} ${lado === "c" ? "comprador" : "vendedor"})`); return; }
+  if (e.target.closest("#resultado")) { copiar($("resultado").dataset.copiar, `$ ${$("resultado").dataset.copiar}`); return; }
+  const fila = e.target.closest("tr[data-fecha]"); if (fila) { irA(fila.dataset.fecha); return; }
+  const dia = e.target.closest("[data-dia]"); if (dia && !dia.disabled) { irA(dia.dataset.dia); abrirCal(false); $("abrir-cal").focus({ preventScroll: true }); return; }
+  const p = e.target.closest("[data-pend]"); if (p) { const x = pendientes[Number(p.dataset.pend)]; if (x) { pendientes[Number(p.dataset.pend)] = null; p.closest("li").remove(); sumar(p.dataset.clase, x.m, x.nombre, x.bajado); } }
+});
+document.addEventListener("keydown", (e) => {
+  const fila = e.target.closest && e.target.closest("tr[data-fecha]");
+  if (fila && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); irA(fila.dataset.fecha); return; }
+  if (e.key === "Escape" && !$("cal").hidden && !$("dlg").open) { abrirCal(false); $("abrir-cal").focus(); return; }
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || (e.target.closest && e.target.closest("#cal")) || $("dlg").open || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === "ArrowLeft") $("antes").click(); else if (e.key === "ArrowRight") $("despues").click();
+});
+$("abrir-actualizar").addEventListener("click", () => { $("informe").innerHTML = ""; $("borrar-cargado").disabled = !leerGuardado(); $("dlg").showModal(); });
+$("cerrar").addEventListener("click", () => $("dlg").close());
+$("dlg").addEventListener("click", (e) => { if (e.target === $("dlg")) $("dlg").close(); });
+$("archivos").addEventListener("change", async (e) => { await cargarArchivos([...e.target.files]); e.target.value = ""; $("borrar-cargado").disabled = !leerGuardado(); });
+const zona = $("soltar");
+["dragenter", "dragover"].forEach((t) => zona.addEventListener(t, (e) => { e.preventDefault(); zona.classList.add("encima"); }));
+["dragleave", "drop"].forEach((t) => zona.addEventListener(t, (e) => { e.preventDefault(); zona.classList.remove("encima"); }));
+zona.addEventListener("drop", async (e) => { await cargarArchivos([...e.dataTransfer.files]); $("borrar-cargado").disabled = !leerGuardado(); });
+$("guardar-copia").addEventListener("click", guardarCopia);
+$("borrar-cargado").addEventListener("click", () => { try { localStorage.removeItem(GUARDADO); } catch { /* nada */ } $("informe").innerHTML = ""; informar("Listo: quedan las cotizaciones que trae el archivo."); $("borrar-cargado").disabled = true; armarDatos(); pintar(); });
+
+/* ----- arranque: por defecto, el día anterior al de hoy (o lo que se estaba viendo, si la página se volvió a leer sola) ----- */
+const GUARDADO_VISTA = "tipos-de-cambio.vista";
+armarDatos();
+try { const c = localStorage.getItem(GUARDADO_CUAL); if (c && [...$("cual").options].some((o) => o.value === c)) $("cual").value = c; } catch { /* nada */ }
+let vista = null;
+try { vista = JSON.parse(sessionStorage.getItem(GUARDADO_VISTA) || "null"); sessionStorage.removeItem(GUARDADO_VISTA); } catch { vista = null; }
+if (vista && Math.abs(Date.now() - vista.cuando) < 120000) {
+  if (typeof vista.monto === "string") $("monto").value = vista.monto;
+  irA(vista.esAyer || !vista.pedida ? correr(hoy(), -1) : vista.pedida);
+  if (vista.filas > 10) { E.filas = vista.filas; pintarTabla(); }
+  requestAnimationFrame(() => scrollTo(0, vista.y || 0));
+} else irA(correr(hoy(), -1));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustar);
+// la página puede quedar abierta de un día para el otro: si seguía en «ayer», pasa al nuevo «ayer»
+let diaVisto = hoy();
+function revisarDia() {
+  const h = hoy();
+  if (h === diaVisto) return;
+  if (E.pedida === correr(diaVisto, -1)) E.pedida = correr(h, -1);
+  diaVisto = h; pintar();
+}
+setInterval(revisarDia, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) revisarDia(); });
+// volver a leer el archivo cada tanto: si el programa que actualiza (actualizar.py) lo cambió, la página abierta se pone al día sola.
+// Cada media hora, si nadie la está usando, o al volver a la pestaña después de un rato; queda en la misma fecha y con el mismo importe
+const CARGADA = Date.now();
+let ultimoUso = Date.now(), ocultaDesde = null;
+["pointerdown", "keydown", "wheel", "input", "touchstart"].forEach((t) => document.addEventListener(t, () => { ultimoUso = Date.now(); }, { passive: true }));
+function recargar() {
+  try { sessionStorage.setItem(GUARDADO_VISTA, JSON.stringify({ cuando: Date.now(), pedida: E.pedida, esAyer: E.pedida === correr(hoy(), -1), monto: $("monto").value, filas: E.filas, y: scrollY })); } catch { /* nada */ }
+  location.reload();
+}
+const ocupada = () => $("dlg").open || !$("cal").hidden || /^(INPUT|SELECT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "");
+function quizasRecargar() {
+  if (ocupada() || Date.now() - CARGADA < 30 * 60000 || Date.now() - ultimoUso < 5 * 60000) return false;
+  recargar(); return true;
+}
+setInterval(quizasRecargar, 60000);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { ocultaDesde = Date.now(); return; }
+  if (ocultaDesde && Date.now() - ocultaDesde > 10 * 60000 && !ocupada()) recargar();
+  ocultaDesde = null;
+});
+window.pruebasTC = { recargar, quizasRecargar, revisarDia, cotizacion, estado: () => ({ fecha: E.fecha, pedida: E.pedida, actualizado: E.actualizado ? E.actualizado.toISOString() : null, dias: { billete: E.dias.billete.length, divisa: E.dias.divisa.length }, primero: primerDia(), ultimo: ultimoDia(), cargado: !!E.cargado }), irA, leerImporte, leerCsvBna, claseDe: (n, t) => { const r = leerCsvBna(t); return r.m ? claseDe(n, r.m) : null; }, todosLosDias };
+window.tiposDeCambioListo = true;
+</script>
+</body>
+</html>
