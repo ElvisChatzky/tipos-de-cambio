@@ -4,7 +4,7 @@
     "2025": {
       "nombre": "Feriados Nacionales 2025",
       "modificado": "2026-06-10T11:49:06Z",
-      "bajado": "2026-11-11T03:40:00-03:00",
+      "bajado": "2026-11-20T18:00:02-03:00",
       "dias": [
         ["2025-01-01", "inamovible", "Año Nuevo"],
         ["2025-03-03", "inamovible", "Carnaval"],
@@ -43,7 +43,7 @@
     "2026": {
       "nombre": "Feriados Nacionales 2026",
       "modificado": "2026-10-02T12:42:31Z",
-      "bajado": "2026-11-11T03:40:00-03:00",
+      "bajado": "2026-11-20T18:00:02-03:00",
       "dias": [
         ["2026-01-01", "inamovible", "Año Nuevo"],
         ["2026-02-16", "inamovible", "Carnaval"],
